@@ -1,0 +1,16 @@
+[Unit]
+Description=Meter OCR HTTP Service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/meter-ocr
+Environment=METER_OCR_HOST=0.0.0.0
+Environment=METER_OCR_PORT=8080
+ExecStart=/opt/meter-ocr/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
