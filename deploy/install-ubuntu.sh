@@ -4,7 +4,7 @@ set -euo pipefail
 APP_DIR="${APP_DIR:-/opt/meter-ocr}"
 
 sudo apt-get update
-sudo apt-get install -y python3 python3-venv python3-pip libzbar0 libgl1 libglib2.0-0
+sudo apt-get install -y python3 python3-venv python3-pip libzbar0 libgl1 libglib2.0-0 tesseract-ocr
 
 sudo mkdir -p "$APP_DIR"
 sudo rsync -a --exclude .venv --exclude __pycache__ ./ "$APP_DIR/"

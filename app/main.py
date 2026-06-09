@@ -57,17 +57,21 @@ async def _process(image_url: str, meter_type: str) -> OcrResponse:
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
+    serial = result.meter_serial_number or result.serial
     return OcrResponse(
-        success=result.serial is not None,
+        success=serial is not None,
         meter_type=result.meter_type,
-        serial=result.serial,
+        serial=serial,
+        meter_serial_number=serial,
+        metrological_seal_number=result.metrological_seal_number,
         serial_source=result.serial_source,
         reading=result.reading,
+        reading_source=result.reading_source,
         qr_data=result.qr_data,
         skipped_barcodes=result.skipped_barcodes,
         ocr_text=result.ocr_text,
         confidence=result.confidence,
-        error=None if result.serial else "Serial number not found",
+        error=None if serial else "Serial number not found",
     )
 
 

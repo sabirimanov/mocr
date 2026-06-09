@@ -15,12 +15,21 @@ class OcrRequest(BaseModel):
 class OcrResponse(BaseModel):
     success: bool
     meter_type: str
-    serial: str | None = None
+    serial: str | None = Field(
+        default=None,
+        description="Deprecated alias for meter_serial_number",
+    )
+    meter_serial_number: str | None = None
+    metrological_seal_number: str | None = None
     serial_source: str | None = Field(
         default=None,
         description="Where serial was found: qr, ocr",
     )
     reading: str | None = None
+    reading_source: str | None = Field(
+        default=None,
+        description="Where reading was found: lcd, ocr",
+    )
     qr_data: list[str] = Field(default_factory=list)
     skipped_barcodes: list[str] = Field(default_factory=list)
     ocr_text: str | None = None

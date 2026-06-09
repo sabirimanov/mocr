@@ -26,8 +26,11 @@ def _get_regions() -> dict[str, MeterRegions]:
 class ExtractionResult:
     meter_type: str
     serial: str | None = None
+    meter_serial_number: str | None = None
+    metrological_seal_number: str | None = None
     serial_source: str | None = None
     reading: str | None = None
+    reading_source: str | None = None
     qr_data: list[str] = field(default_factory=list)
     skipped_barcodes: list[str] = field(default_factory=list)
     ocr_text: str | None = None
@@ -37,9 +40,12 @@ class ExtractionResult:
     def to_dict(self) -> dict[str, Any]:
         return {
             "meter_type": self.meter_type,
-            "serial": self.serial,
+            "serial": self.serial or self.meter_serial_number,
+            "meter_serial_number": self.meter_serial_number or self.serial,
+            "metrological_seal_number": self.metrological_seal_number,
             "serial_source": self.serial_source,
             "reading": self.reading,
+            "reading_source": self.reading_source,
             "qr_data": self.qr_data,
             "skipped_barcodes": self.skipped_barcodes,
             "ocr_text": self.ocr_text,
