@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     max_image_bytes: int = 15 * 1024 * 1024
     ocr_use_angle_cls: bool = True
     regions_path: Path = Path("data/regions.yaml")
+    # Comma-separated directories local image_path values must fall under.
+    allowed_image_dirs: str = "data/images,/www/wwwroot/meter-ocr/data/images"
 
 
 settings = Settings()

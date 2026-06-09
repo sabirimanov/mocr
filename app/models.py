@@ -2,14 +2,27 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, Field, HttpUrl, model_validator
 
 
 class OcrRequest(BaseModel):
-    image_url: HttpUrl
     meter_type: Literal["pf", "itron"] = Field(
         description="Meter manufacturer/type; selects extraction rules"
     )
+    image_url: HttpUrl | None = Field(
+        default=None,
+        description="Public http(s) URL of the meter image",
+    )
+    image_path: str | None = Field(
+        default=None,
+        description="Server-local file path (must be under METER_OCR_ALLOWED_IMAGE_DIRS)",
+    )
+
+    @model_validator(mode="after")
+    def require_one_image_source(self) -> OcrRequest:
+        if bool(self.image_url) == bool(self.image_path):
+            raise ValueError("Provide exactly one of image_url or image_path")
+        return self
 
 
 class OcrResponse(BaseModel):

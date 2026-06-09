@@ -9,6 +9,14 @@ from fastapi import HTTPException
 from app.config import settings
 
 
+async def load_image_source(source: str) -> np.ndarray:
+    """Load image from http(s) URL or a server-local file path."""
+    source = source.strip()
+    if source.startswith(("http://", "https://")):
+        return await fetch_image(source)
+    return load_image_from_path(source, check_allowed=True)
+
+
 async def fetch_image(url: str) -> np.ndarray:
     """Download an image URL and return it as a BGR numpy array."""
     try:
@@ -45,17 +53,54 @@ def _decode_image_bytes(data: bytes) -> np.ndarray | None:
     return image
 
 
-def load_image_from_path(path: Path | str) -> np.ndarray:
+def load_image_from_path(path: Path | str, *, check_allowed: bool = False) -> np.ndarray:
     import cv2
 
-    file_path = Path(path)
+    file_path = Path(path).expanduser()
+    if not file_path.is_absolute():
+        file_path = (Path.cwd() / file_path).resolve()
+    else:
+        file_path = file_path.resolve()
+
+    if check_allowed and not _is_path_allowed(file_path):
+        raise HTTPException(
+            status_code=403,
+            detail=f"Image path not allowed: {file_path}. "
+            f"Configure METER_OCR_ALLOWED_IMAGE_DIRS.",
+        )
+
     if not file_path.exists():
-        raise FileNotFoundError(f"Image not found: {file_path}")
+        raise HTTPException(status_code=404, detail=f"Image not found: {file_path}")
+
+    if file_path.stat().st_size > settings.max_image_bytes:
+        raise HTTPException(status_code=400, detail="Image exceeds maximum allowed size")
 
     image = cv2.imread(str(file_path), cv2.IMREAD_COLOR)
     if image is None:
-        raise ValueError(f"Could not decode image: {file_path}")
+        raise HTTPException(status_code=400, detail=f"Could not decode image: {file_path}")
     return image
+
+
+def _allowed_roots() -> list[Path]:
+    roots: list[Path] = []
+    for entry in settings.allowed_image_dirs.split(","):
+        entry = entry.strip()
+        if not entry:
+            continue
+        root = Path(entry).expanduser()
+        if not root.is_absolute():
+            root = (Path.cwd() / root).resolve()
+        else:
+            root = root.resolve()
+        roots.append(root)
+    return roots
+
+
+def _is_path_allowed(file_path: Path) -> bool:
+    roots = _allowed_roots()
+    if not roots:
+        return False
+    return any(file_path == root or root in file_path.parents for root in roots)
 
 
 def normalize_text(text: str) -> str:
